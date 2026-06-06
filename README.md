@@ -10,4 +10,4 @@ Dashboard
 
 <img width="1844" height="763" alt="image" src="https://github.com/user-attachments/assets/f03ea65e-2926-4841-87f4-387c0a9c9346" />
 
-
+<img width="1845" height="792" alt="image" src="https://github.com/user-attachments/assets/30297e33-06c1-4919-9455-784f35b8d44e" />
