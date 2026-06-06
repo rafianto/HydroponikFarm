@@ -1,0 +1,201 @@
+{% extends 'farm/base.html' %}
+{% load farm_tags %}
+
+{% block title %}Data Penanaman{% endblock %}
+{% block nav_penanaman %}active text-emerald-400{% endblock %}
+{% block page_header %}Data Penanaman{% endblock %}
+
+{% block content %}
+<!-- Header & Tombol Tambah -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+    <div>
+        <h2 class="text-lg font-semibold text-gray-800">Data Penanaman</h2>
+        <p class="text-sm text-gray-500">Pantau stok panen, estimasi penjualan, dan status tanaman.</p>
+    </div>
+
+    <a href="{% url 'farm:penanaman_create' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition text-sm font-semibold shadow-sm">
+        <i class="fas fa-plus text-xs"></i> Tambah Penanaman
+    </a>
+</div>
+
+<!-- Form Pencarian & Filter -->
+<div class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+    <form method="get">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            
+            <!-- Komoditi (Bibit) -->
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Komoditas / Bibit</label>
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="text" name="komoditi" value="{{ komoditi_filter }}" 
+                        class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                        placeholder="Cari nama bibit...">
+                </div>
+            </div>
+
+            <!-- Tanggal Tanam Mulai -->
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Tgl Tanam (Mulai)</label>
+                <input type="date" name="tgl_mulai" value="{{ tgl_mulai_filter }}" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm">
+            </div>
+
+            <!-- Tanggal Tanam Selesai -->
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Tgl Tanam (Sampai)</label>
+                <input type="date" name="tgl_selesai" value="{{ tgl_selesai_filter }}" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm">
+            </div>
+
+            <!-- Lokasi -->
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Lokasi / Rak</label>
+                <input type="text" name="lokasi" value="{{ lokasi_filter }}" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                    placeholder="Cari lokasi tanam...">
+            </div>
+
+            <!-- Status -->
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Status</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm bg-white">
+                    <option value="">Semua Status</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 mt-4">
+            <button type="submit" class="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition">
+                <i class="fas fa-search mr-1"></i> Cari Data
+            </button>
+            <a href="{% url 'farm:penanaman_list' %}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+                Reset
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Tabel -->
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                    <th class="text-left px-5 py-3 font-semibold text-gray-600">Bibit</th>
+                    <th class="text-left px-5 py-3 font-semibold text-gray-600">Tanggal Tanam</th>
+                    <th class="text-center px-5 py-3 font-semibold text-gray-600">Jumlah</th>
+                    <th class="text-left px-5 py-3 font-semibold text-gray-600">Lokasi / Rak</th>
+                    <th class="text-left px-5 py-3 font-semibold text-gray-600">Sistem</th>
+                    <th class="text-center px-5 py-3 font-semibold text-gray-600">Status</th>
+                    <th class="text-center px-5 py-3 font-semibold text-gray-600">Hari Ke-</th>
+                    <th class="text-center px-5 py-3 font-semibold text-gray-600">Est. Panen</th>
+                    <th class="text-center px-5 py-3 font-semibold text-gray-600">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obj in object_list %}
+                <tr class="table-row border-b border-gray-100 hover:bg-gray-50">
+                    <td class="px-5 py-3">
+                        <p class="font-medium text-gray-900">{{ obj.bibit.nama }}</p>
+                        <p class="text-xs text-gray-500">{{ obj.bibit.varietas }}</p>
+                    </td>
+                    <td class="px-5 py-3 text-gray-600">{{ obj.tanggal_tanam|date:"d M Y" }}</td>
+                    <td class="px-5 py-3 text-center font-medium text-gray-900">{{ obj.jumlah }}</td>
+                    <td class="px-5 py-3 text-gray-600">{{ obj.lokasi }}</td>
+                    <td class="px-5 py-3">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {{ obj.get_sistem_hidroponik_display }}
+                        </span>
+                    </td>
+                    <td class="px-5 py-3 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold {{ obj.status|status_badge }}">
+                            {{ obj.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-5 py-3 text-center font-semibold text-gray-900">
+                        {{ obj.hari_sejak_tanam }} <span class="text-xs font-normal text-gray-500">hari</span>
+                    </td>
+                    <td class="px-5 py-3 text-center">
+                        {% if obj.estimasi_panen %}
+                            {% if obj.estimasi_hari_panen <= 0 %}
+                                <span class="text-red-600 font-semibold text-xs">
+                                    <i class="fas fa-clock"></i> Lewat {{ obj.estimasi_hari_panen|cut:"-" }} hari
+                                </span>
+                            {% elif obj.estimasi_hari_panen <= 7 %}
+                                <span class="text-amber-600 font-semibold text-xs">
+                                    <i class="fas fa-bell"></i> ~{{ obj.estimasi_hari_panen }} hari lagi
+                                </span>
+                            {% else %}
+                                <span class="text-gray-600 text-xs">{{ obj.estimasi_panen|date:"d M Y" }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-gray-400 text-xs">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-3 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <a href="{% url 'farm:perawatan_create' %}?penanaman={{ obj.pk }}" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 transition" title="Tambah Perawatan">
+                                <i class="fas fa-wrench text-xs"></i>
+                            </a>
+                            <a href="{% url 'farm:pemanenan_create' %}?penanaman={{ obj.pk }}" class="p-1.5 rounded-lg hover:bg-amber-50 text-amber-600 transition" title="Tambah Pemanenan">
+                                <i class="fas fa-cut text-xs"></i>
+                            </a>
+                            <a href="{% url 'farm:penanaman_update' obj.pk %}" class="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 transition" title="Edit">
+                                <i class="fas fa-pen text-xs"></i>
+                            </a>
+                            <form id="del-{{ obj.pk }}" action="{% url 'farm:penanaman_delete' obj.pk %}" method="post" class="inline">
+                                {% csrf_token %}
+                                <button type="button" onclick="confirmDelete('del-{{ obj.pk }}')" class="p-1.5 rounded-lg hover:bg-red-50 text-red-600 transition" title="Hapus">
+                                    <i class="fas fa-trash text-xs"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="px-5 py-16 text-center text-gray-400">
+                        <i class="fas fa-leaf text-4xl mb-3 block text-gray-300"></i>
+                        <p class="font-medium">Data tidak ditemukan</p>
+                        <p class="text-sm mt-1">Coba ubah kata kunci pencarian atau filter status</p>
+                        <a href="{% url 'farm:penanaman_list' %}" class="text-emerald-600 hover:underline text-sm mt-2 inline-block">Reset pencarian</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginasi -->
+    {% if is_paginated %}
+    <div class="px-5 py-3 border-t border-gray-200 flex items-center justify-between">
+        <span class="text-xs text-gray-500">Menampilkan {{ page_obj.start_index }} - {{ page_obj.end_index }} dari {{ page_obj.paginator.count }} data</span>
+        <div class="flex gap-1">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&komoditi={{ komoditi_filter }}&tgl_mulai={{ tgl_mulai_filter }}&tgl_selesai={{ tgl_selesai_filter }}&lokasi={{ lokasi_filter }}&status={{ status_filter }}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-sm hover:bg-gray-50 transition">
+                <i class="fas fa-chevron-left text-xs"></i>
+            </a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-sm font-medium">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}&komoditi={{ komoditi_filter }}&tgl_mulai={{ tgl_mulai_filter }}&tgl_selesai={{ tgl_selesai_filter }}&lokasi={{ lokasi_filter }}&status={{ status_filter }}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-sm hover:bg-gray-50 transition">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&komoditi={{ komoditi_filter }}&tgl_mulai={{ tgl_mulai_filter }}&tgl_selesai={{ tgl_selesai_filter }}&lokasi={{ lokasi_filter }}&status={{ status_filter }}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-sm hover:bg-gray-50 transition">
+                <i class="fas fa-chevron-right text-xs"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

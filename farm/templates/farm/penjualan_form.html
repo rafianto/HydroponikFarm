@@ -1,0 +1,246 @@
+{% extends 'farm/base.html' %}
+{% load farm_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block nav_penjualan %}active text-emerald-400{% endblock %}
+{% block page_header %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
+        
+        <!-- Header Form -->
+        <div class="mb-6 pb-4 border-b border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-800">
+                {% if form.instance.pk %}Edit Data Penjualan{% else %}Catat Penjualan Baru{% endif %}
+            </h3>
+            <p class="text-sm text-gray-500 mt-1">Isi detail penjualan hasil panen. Field dengan tanda <span class="text-red-500">*</span> wajib diisi.</p>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                {% for error in form.non_field_errors %}
+                <p><i class="fas fa-exclamation-circle mr-1"></i> {{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Informasi Dasar -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <h4 class="text-sm font-semibold text-gray-700 mb-4"><i class="fas fa-file-invoice mr-2 text-gray-400"></i>Informasi Transaksi</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+                    
+                    <!-- Pemanenan -->
+                    <div>
+                        <label for="{{ form.pemanenan.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Sumber Pemanenan <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.pemanenan }}
+                        {% if form.pemanenan.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.pemanenan.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tanggal Jual -->
+                    <div>
+                        <label for="{{ form.tanggal_jual.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Tanggal Jual <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.tanggal_jual }}
+                        {% if form.tanggal_jual.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.tanggal_jual.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Pembeli -->
+                    <div>
+                        <label for="{{ form.pembeli.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Nama Pembeli <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.pembeli }}
+                        {% if form.pembeli.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.pembeli.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Penjualan & Pembayaran -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+                
+                <!-- Jumlah Jual -->
+                <div>
+                    <label for="{{ form.jumlah_jual.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Jumlah Jual <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.jumlah_jual }}
+                    {% if form.jumlah_jual.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.jumlah_jual.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Harga Satuan -->
+                <div>
+                    <label for="{{ form.harga_satuan.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Harga Satuan (Rp) <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">Rp</span>
+                        {{ form.harga_satuan }}
+                    </div>
+                    {% if form.harga_satuan.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.harga_satuan.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Status Pembayaran -->
+                <div>
+                    <label for="{{ form.status_pembayaran.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Status Pembayaran <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.status_pembayaran }}
+                    {% if form.status_pembayaran.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.status_pembayaran.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Kalkulasi Total Harga (Read-only visual) -->
+                <div class="md:col-span-2 p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between">
+                    <span class="text-sm font-medium text-emerald-800">Estimasi Total Pendapatan:</span>
+                    <span class="text-xl font-bold text-emerald-700" id="total-revenue-display">Rp 0</span>
+                </div>
+
+                <!-- Catatan -->
+                <div class="md:col-span-3">
+                    <label for="{{ form.catatan.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Catatan
+                    </label>
+                    {{ form.catatan }}
+                    {% if form.catatan.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.catatan.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tombol Aksi -->
+            <div class="mt-8 pt-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-end gap-3">
+                <a href="{{ cancel_url }}" class="w-full sm:w-auto px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition text-center">
+                    Batal
+                </a>
+                <button type="submit" id="submit-btn" class="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700 transition shadow-sm">
+                    {% if form.instance.pk %}Simpan Perubahan{% else %}Simpan Penjualan{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const pemanenanSelect = document.getElementById('{{ form.pemanenan.id_for_label }}');
+        const jumlahInput = document.getElementById('{{ form.jumlah_jual.id_for_label }}');
+        const hargaInput = document.getElementById('{{ form.harga_satuan.id_for_label }}');
+        const totalDisplay = document.getElementById('total-revenue-display');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        // Tambahkan class styling khusus untuk input Harga agar prefix Rp tidak tertimpa teks
+        if(hargaInput) {
+            hargaInput.classList.add('pl-10');
+        }
+
+        // Buat elemen pesan error custom di bawah input Jumlah Jual
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'text-red-600 text-xs mt-1 font-semibold hidden';
+        warningDiv.id = 'stok-warning';
+        jumlahInput.parentNode.insertBefore(warningDiv, jumlahInput.nextSibling);
+
+        function formatRupiah(angka) {
+            const numberFormat = new Intl.NumberFormat('id-ID');
+            return 'Rp ' + numberFormat.format(angka);
+        }
+
+        function hitungTotal() {
+            const jumlah = parseFloat(jumlahInput.value) || 0;
+            const harga = parseFloat(hargaInput.value) || 0;
+            const total = jumlah * harga;
+            totalDisplay.textContent = formatRupiah(total);
+        }
+
+        function cekStok() {
+            const selectedOption = pemanenanSelect.options[pemanenanSelect.selectedIndex];
+            
+            // Jika belum pilih pemanenan, lewati
+            if (!selectedOption || selectedOption.value === '') {
+                warningDiv.classList.add('hidden');
+                jumlahInput.classList.remove('border-red-500', 'focus:ring-red-500', 'focus:border-red-500');
+                jumlahInput.classList.add('border-gray-300', 'focus:ring-emerald-500', 'focus:border-emerald-500');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+
+            // Ambil teks dari dropdown, contoh: "Kangkung - Sisa: 5 Kilogram (12/06)"
+            const text = selectedOption.text;
+            
+            // Ekstrak angka sisa stok menggunakan Regex
+            const match = text.match(/Sisa:\s*([\d.]+)/);
+            
+            if (match && match[1]) {
+                // Ganti titik (pemisah ribuan) lalu konversi ke float
+                const sisaStok = parseFloat(match[1].replace(/\./g, '')) || 0;
+                const jumlahJual = parseFloat(jumlahInput.value) || 0;
+
+                if (jumlahJual > sisaStok && sisaStok > 0) {
+                    warningDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Jumlah melebihi sisa stok! Tersedia hanya ${sisaStok}`;
+                    warningDiv.classList.remove('hidden');
+                    
+                    // Ubah border input jadi merah
+                    jumlahInput.classList.add('border-red-500', 'focus:ring-red-500', 'focus:border-red-500');
+                    jumlahInput.classList.remove('border-gray-300', 'focus:ring-emerald-500', 'focus:border-emerald-500');
+                    
+                    // Disable tombol submit
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else if (jumlahJual > 0 && sisaStok <= 0) {
+                    warningDiv.innerHTML = `<i class="fas fa-ban"></i> Stok sudah habis! Tidak bisa dijual.`;
+                    warningDiv.classList.remove('hidden');
+                    
+                    jumlahInput.classList.add('border-red-500', 'focus:ring-red-500', 'focus:border-red-500');
+                    jumlahInput.classList.remove('border-gray-300', 'focus:ring-emerald-500', 'focus:border-emerald-500');
+                    
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    // Kondisi aman
+                    warningDiv.classList.add('hidden');
+                    jumlahInput.classList.remove('border-red-500', 'focus:ring-red-500', 'focus:border-red-500');
+                    jumlahInput.classList.add('border-gray-300', 'focus:ring-emerald-500', 'focus:border-emerald-500');
+                    
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        // Hitung saat pertama kali load (jika form edit)
+        hitungTotal();
+        cekStok();
+
+        // Event listener untuk real-time calculation & validation
+        if(jumlahInput && hargaInput) {
+            jumlahInput.addEventListener('input', hitungTotal);
+            jumlahInput.addEventListener('input', cekStok); // Cek stok saat mengetik
+            hargaInput.addEventListener('input', hitungTotal);
+        }
+        
+        if(pemanenanSelect) {
+            pemanenanSelect.addEventListener('change', cekStok); // Cek stok saat ganti panenan
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends 'farm/base.html' %}
+{% load farm_tags %}
+
+{% block title %}Biaya Operasional{% endblock %}
+{% block nav_biaya %}active text-emerald-400{% endblock %}
+{% block page_header %}Biaya Operasional{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <!-- Filter Kategori -->
+    <form method="get" class="flex gap-2 flex-1 max-w-md">
+        <div class="relative flex-1">
+            <i class="fas fa-filter absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <select name="kategori" onchange="this.form.submit()" 
+                class="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm appearance-none bg-white">
+                <option value="">Semua Kategori</option>
+                {% for value, label in kategori_choices %}
+                <option value="{{ value }}" {% if kategori_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    <a href="{% url 'farm:biaya_create' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition text-sm font-semibold shadow-sm">
+        <i class="fas fa-plus text-xs"></i> Tambah Pengeluaran
+    </a>
+</div>
+
+<!-- Tabel -->
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                    <th class="text-left px-5 py-3 font-semibold text-gray-600">Tanggal</th>
+                    <th class="text-center px-5 py-3 font-semibold text-gray-600">Kategori</th>
+                    <th class="text-left px-5 py-3 font-semibold text-gray-600">Deskripsi</th>
+                    <th class="text-right px-5 py-3 font-semibold text-gray-600">Jumlah (Rp)</th>
+                    <th class="text-left px-5 py-3 font-semibold text-gray-600">Catatan</th>
+                    <th class="text-center px-5 py-3 font-semibold text-gray-600">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obj in object_list %}
+                <tr class="table-row border-b border-gray-100 hover:bg-gray-50">
+                    <td class="px-5 py-3 text-gray-600">
+                        <i class="far fa-calendar-alt text-gray-400 mr-1"></i>
+                        {{ obj.tanggal|date:"d M Y" }}
+                    </td>
+                    <td class="px-5 py-3 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold
+                            {% if obj.kategori == 'listrik' %}bg-yellow-100 text-yellow-800
+                            {% elif obj.kategori == 'air' %}bg-blue-100 text-blue-800
+                            {% elif obj.kategori == 'nutrisi' %}bg-emerald-100 text-emerald-800
+                            {% elif obj.kategori == 'media_tanam' %}bg-orange-100 text-orange-800
+                            {% elif obj.kategori == 'peralatan' %}bg-purple-100 text-purple-800
+                            {% elif obj.kategori == 'tenaga_kerja' %}bg-indigo-100 text-indigo-800
+                            {% elif obj.kategori == 'transportasi' %}bg-cyan-100 text-cyan-800
+                            {% elif obj.kategori == 'pemeliharaan' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ obj.get_kategori_display }}
+                        </span>
+                    </td>
+                    <td class="px-5 py-3 font-medium text-gray-900">
+                        {{ obj.deskripsi }}
+                    </td>
+                    <td class="px-5 py-3 text-right font-bold text-red-600">
+                        - {{ obj.jumlah|rupiah }}
+                    </td>
+                    <td class="px-5 py-3 text-gray-600 max-w-xs truncate">
+                        {{ obj.catatan|default:"-" }}
+                    </td>
+                    <td class="px-5 py-3 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <a href="{% url 'farm:biaya_update' obj.pk %}" class="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 transition" title="Edit">
+                                <i class="fas fa-pen text-xs"></i>
+                            </a>
+                            <form id="del-{{ obj.pk }}" action="{% url 'farm:biaya_delete' obj.pk %}" method="post" class="inline">
+                                {% csrf_token %}
+                                <button type="button" onclick="confirmDelete('del-{{ obj.pk }}')" class="p-1.5 rounded-lg hover:bg-red-50 text-red-600 transition" title="Hapus">
+                                    <i class="fas fa-trash text-xs"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-5 py-16 text-center text-gray-400">
+                        <i class="fas fa-money-bill-wave text-4xl mb-3 block text-gray-300"></i>
+                        <p class="font-medium">Belum ada data biaya operasional</p>
+                        <p class="text-sm mt-1">Catat pengeluaran listrik, air, nutrisi, dan lainnya</p>
+                        <a href="{% url 'farm:biaya_create' %}" class="text-emerald-600 hover:underline text-sm mt-2 inline-block">Catat pengeluaran pertama</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginasi -->
+    {% if is_paginated %}
+    <div class="px-5 py-3 border-t border-gray-200 flex items-center justify-between">
+        <span class="text-xs text-gray-500">Menampilkan {{ page_obj.start_index }} - {{ page_obj.end_index }} dari {{ page_obj.paginator.count }} data</span>
+        <div class="flex gap-1">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if kategori_filter %}&kategori={{ kategori_filter }}{% endif %}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-sm hover:bg-gray-50 transition">
+                <i class="fas fa-chevron-left text-xs"></i>
+            </a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-sm font-medium">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% if kategori_filter %}&kategori={{ kategori_filter }}{% endif %}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-sm hover:bg-gray-50 transition">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if kategori_filter %}&kategori={{ kategori_filter }}{% endif %}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-sm hover:bg-gray-50 transition">
+                <i class="fas fa-chevron-right text-xs"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

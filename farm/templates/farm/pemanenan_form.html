@@ -1,0 +1,119 @@
+{% extends 'farm/base.html' %}
+{% load farm_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block nav_pemanenan %}active text-emerald-400{% endblock %}
+{% block page_header %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
+        
+        <!-- Header Form -->
+        <div class="mb-6 pb-4 border-b border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-800">
+                {% if form.instance.pk %}Edit Data Pemanenan{% else %}Catat Pemanenan Baru{% endif %}
+            </h3>
+            <p class="text-sm text-gray-500 mt-1">Masukkan detail hasil panen. Field dengan tanda <span class="text-red-500">*</span> wajib diisi.</p>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                {% for error in form.non_field_errors %}
+                <p><i class="fas fa-exclamation-circle mr-1"></i> {{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Informasi Dasar Panen -->
+            <div class="mb-6 p-4 bg-amber-50/50 rounded-lg border border-amber-100">
+                <h4 class="text-sm font-semibold text-gray-700 mb-4"><i class="fas fa-leaf mr-2 text-amber-500"></i>Detail Panen</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+                    
+                    <!-- Penanaman -->
+                    <div>
+                        <label for="{{ form.penanaman.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Sumber Penanaman <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.penanaman }}
+                        {% if form.penanaman.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.penanaman.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tanggal Panen -->
+                    <div>
+                        <label for="{{ form.tanggal_panen.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Tanggal Panen <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.tanggal_panen }}
+                        {% if form.tanggal_panen.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.tanggal_panen.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Kualitas -->
+                    <div>
+                        <label for="{{ form.kualitas.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Kualitas Hasil <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.kualitas }}
+                        {% if form.kualitas.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.kualitas.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Jumlah Panen & Satuan (Side by side) -->
+                    <div class="md:col-span-2 grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="{{ form.jumlah_panen.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Jumlah Panen <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.jumlah_panen }}
+                            {% if form.jumlah_panen.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.jumlah_panen.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="{{ form.satuan.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Satuan <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.satuan }}
+                            {% if form.satuan.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.satuan.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Catatan Tambahan -->
+            <div class="grid grid-cols-1 gap-y-5">
+                <div>
+                    <label for="{{ form.catatan.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Catatan Panen
+                    </label>
+                    {{ form.catatan }}
+                    {% if form.catatan.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.catatan.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-400">Contoh: Ukuran daun seragam, tidak ada hama, warna daun hijau segar.</p>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi -->
+            <div class="mt-8 pt-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-end gap-3">
+                <a href="{{ cancel_url }}" class="w-full sm:w-auto px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition text-center">
+                    Batal
+                </a>
+                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700 transition shadow-sm">
+                    {% if form.instance.pk %}Simpan Perubahan{% else %}Simpan Pemanenan{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

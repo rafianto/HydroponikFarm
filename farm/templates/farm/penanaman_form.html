@@ -1,0 +1,135 @@
+{% extends 'farm/base.html' %}
+{% load farm_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block nav_penanaman %}active text-emerald-400{% endblock %}
+{% block page_header %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
+        
+        <!-- Header Form -->
+        <div class="mb-6 pb-4 border-b border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-800">
+                {% if form.instance.pk %}Edit Data Penanaman{% else %}Catatan Penanaman Baru{% endif %}
+            </h3>
+            <p class="text-sm text-gray-500 mt-1">Lengkapi form di bawah ini. Field dengan tanda <span class="text-red-500">*</span> wajib diisi.</p>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                {% for error in form.non_field_errors %}
+                <p><i class="fas fa-exclamation-circle mr-1"></i> {{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+                
+                <!-- Pilih Bibit -->
+                <div>
+                    <label for="{{ form.bibit.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Pilih Bibit <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.bibit }}
+                    {% if form.bibit.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.bibit.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Tanggal Tanam -->
+                <div>
+                    <label for="{{ form.tanggal_tanam.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Tanggal Tanam <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.tanggal_tanam }}
+                    {% if form.tanggal_tanam.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.tanggal_tanam.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Jumlah Tanam -->
+                <div>
+                    <label for="{{ form.jumlah.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Jumlah Tanam <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.jumlah }}
+                    {% if form.jumlah.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.jumlah.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Lokasi / Rak -->
+                <div>
+                    <label for="{{ form.lokasi.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Lokasi / Rak <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.lokasi }}
+                    {% if form.lokasi.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.lokasi.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Sistem Hidroponik -->
+                <div>
+                    <label for="{{ form.sistem_hidroponik.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Sistem Hidroponik <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.sistem_hidroponik }}
+                    {% if form.sistem_hidroponik.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.sistem_hidroponik.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Status <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Estimasi Panen -->
+                <div>
+                    <label for="{{ form.estimasi_panen.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Estimasi Panen
+                    </label>
+                    {{ form.estimasi_panen }}
+                    {% if form.estimasi_panen.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.estimasi_panen.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Catatan (Full width) -->
+                <div class="md:col-span-3">
+                    <label for="{{ form.catatan.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        Catatan
+                    </label>
+                    {{ form.catatan }}
+                    {% if form.catatan.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.catatan.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- Tombol Aksi -->
+            <div class="mt-8 pt-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-end gap-3">
+                <a href="{{ cancel_url }}" class="w-full sm:w-auto px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition text-center">
+                    Batal
+                </a>
+                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700 transition shadow-sm">
+                    {% if form.instance.pk %}Simpan Perubahan{% else %}Simpan Penanaman{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

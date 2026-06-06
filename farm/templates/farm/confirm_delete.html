@@ -1,0 +1,41 @@
+{% extends 'farm/base.html' %}
+{% load farm_tags %}
+
+{% block title %}Konfirmasi Hapus{% endblock %}
+{% block page_header %}Konfirmasi Hapus{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto mt-12">
+    <div class="bg-white rounded-xl border border-red-200 p-8 text-center shadow-sm">
+        
+        <!-- Icon Peringatan -->
+        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-5">
+            <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+        </div>
+
+        <h3 class="text-xl font-bold text-gray-900 mb-2">Konfirmasi Penghapusan</h3>
+        
+        <div class="my-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <p class="text-sm text-gray-700">Apakah Anda yakin ingin menghapus data berikut?</p>
+            <p class="text-lg font-bold text-gray-900 mt-2">{{ object }}</p>
+        </div>
+
+        <p class="text-sm text-red-600 mb-6">
+            <i class="fas fa-info-circle mr-1"></i> 
+            Tindakan ini tidak dapat dibatalkan. Data yang sudah dihapus akan hilang secara permanen.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a href="{{ cancel_url }}" class="w-full sm:w-auto px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition text-center">
+                    Batal
+                </a>
+                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition shadow-sm">
+                    <i class="fas fa-trash mr-1"></i> Ya, Hapus
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

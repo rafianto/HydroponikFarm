@@ -1,0 +1,383 @@
+{% extends 'farm/base.html' %}
+{% load farm_tags %}
+
+{% block title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active text-emerald-400{% endblock %}
+{% block page_header %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stat Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+
+    <div class="card-hover bg-white rounded-xl border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-seedling text-emerald-600"></i>
+            </div>
+            <a href="{% url 'farm:bibit_list' %}" class="text-xs text-gray-400 hover:text-emerald-600"><i class="fas fa-arrow-right"></i></a>
+        </div>
+        <p class="stat-value text-2xl font-bold text-gray-900">{{ total_bibit }}</p>
+        <p class="text-xs text-gray-500 mt-1">Stok Bibit</p>
+    </div>
+
+    <div class="card-hover bg-white rounded-xl border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-leaf text-blue-600"></i>
+            </div>
+            <a href="{% url 'farm:penanaman_list' %}" class="text-xs text-gray-400 hover:text-blue-600"><i class="fas fa-arrow-right"></i></a>
+        </div>
+        <p class="stat-value text-2xl font-bold text-gray-900">{{ penanaman_aktif }}</p>
+        <p class="text-xs text-gray-500 mt-1">Penanaman Aktif</p>
+    </div>
+
+    <div class="card-hover bg-white rounded-xl border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-cut text-amber-600"></i>
+            </div>
+            <a href="{% url 'farm:pemanenan_list' %}" class="text-xs text-gray-400 hover:text-amber-600"><i class="fas fa-arrow-right"></i></a>
+        </div>
+        <p class="stat-value text-2xl font-bold text-gray-900">{{ panen_bulan_ini }}</p>
+        <p class="text-xs text-gray-500 mt-1">Panen Bulan Ini</p>
+    </div>
+
+    <div class="card-hover bg-white rounded-xl border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-arrow-trend-up text-emerald-600"></i>
+            </div>
+            <a href="{% url 'farm:penjualan_list' %}" class="text-xs text-gray-400 hover:text-emerald-600"><i class="fas fa-arrow-right"></i></a>
+        </div>
+        <p class="stat-value text-lg font-bold text-gray-900">{{ pendapatan_bulan_ini|rupiah }}</p>
+        <p class="text-xs text-gray-500 mt-1">Pendapatan Bulan Ini</p>
+    </div>
+
+    <div class="card-hover bg-white rounded-xl border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-arrow-trend-down text-red-600"></i>
+            </div>
+            <a href="{% url 'farm:biaya_list' %}" class="text-xs text-gray-400 hover:text-red-600"><i class="fas fa-arrow-right"></i></a>
+        </div>
+        <p class="stat-value text-lg font-bold text-gray-900">{{ total_pengeluaran|rupiah }}</p>
+        <p class="text-xs text-gray-500 mt-1">Pengeluaran Bulan Ini</p>
+    </div>
+
+    <div class="card-hover bg-white rounded-xl border p-5 {% if profit >= 0 %}border-emerald-200{% else %}border-red-200{% endif %}">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center {% if profit >= 0 %}bg-emerald-100{% else %}bg-red-100{% endif %}">
+                <i class="fas fa-coins {% if profit >= 0 %}text-emerald-600{% else %}text-red-600{% endif %}"></i>
+            </div>
+        </div>
+        <p class="stat-value text-lg font-bold {% if profit >= 0 %}text-emerald-700{% else %}text-red-700{% endif %}">{{ profit|rupiah }}</p>
+        <p class="text-xs text-gray-500 mt-1">Profit Bulan Ini</p>
+    </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- CASHFLOW & MUTASI KEUANGAN -->
+<!-- ======================================================= -->
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden mb-8">
+    
+    <!-- Header & Tab Filter -->
+    <div class="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+            <h3 class="text-base font-bold text-gray-900">Laporan Arus Kas & Mutasi</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Riwayat keluar masuk dana usaha hidroponik</p>
+        </div>
+        <div class="flex bg-gray-100 rounded-lg p-1">
+            <a href="?period=daily" class="px-4 py-1.5 rounded-md text-xs font-semibold transition-all {% if period == 'daily' %}bg-white shadow text-emerald-700{% else %}text-gray-600 hover:text-gray-900{% endif %}">Harian</a>
+            <a href="?period=monthly" class="px-4 py-1.5 rounded-md text-xs font-semibold transition-all {% if period == 'monthly' %}bg-white shadow text-emerald-700{% else %}text-gray-600 hover:text-gray-900{% endif %}">Bulanan</a>
+            <a href="?period=yearly" class="px-4 py-1.5 rounded-md text-xs font-semibold transition-all {% if period == 'yearly' %}bg-white shadow text-emerald-700{% else %}text-gray-600 hover:text-gray-900{% endif %}">Tahunan</a>
+        </div>
+    </div>
+
+    <!-- Tabel Mutasi Grid -->
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="text-left px-6 py-3 font-semibold text-gray-600 w-1/4">Periode</th>
+                    <th class="text-right px-6 py-3 font-semibold text-emerald-700 w-1/5">Pemasukan (In)</th>
+                    <th class="text-right px-6 py-3 font-semibold text-red-700 w-1/5">Pengeluaran (Out)</th>
+                    <th class="text-right px-6 py-3 font-semibold text-gray-700 w-1/5">Selisih (Net)</th>
+                    <th class="text-right px-6 py-3 font-semibold text-blue-800 w-1/5">Saldo Akumulasi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in cashflow_report %}
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-3 font-medium text-gray-900">
+                        <i class="fas fa-calendar-day text-gray-400 mr-2 text-xs"></i>{{ row.label }}
+                    </td>
+                    <td class="px-6 py-3 text-right font-semibold text-emerald-600">
+                        {% if row.inflow > 0 %}+ {{ row.inflow|rupiah }}{% else %}<span class="text-gray-400">Rp 0</span>{% endif %}
+                    </td>
+                    <td class="px-6 py-3 text-right font-semibold text-red-500">
+                        {% if row.outflow > 0 %}- {{ row.outflow|rupiah }}{% else %}<span class="text-gray-400">Rp 0</span>{% endif %}
+                    </td>
+                    <td class="px-6 py-3 text-right font-bold {% if row.net_flow >= 0 %}text-emerald-700{% else %}text-red-700{% endif %}">
+                        {% if row.net_flow >= 0 %}+{% endif %}{{ row.net_flow|rupiah }}
+                    </td>
+                    <td class="px-6 py-3 text-right font-bold text-blue-900 bg-blue-50/50">
+                        {{ row.accumulated_balance|rupiah }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-12 text-center text-gray-400">
+                        <i class="fas fa-folder-open text-3xl mb-2 block text-gray-300"></i>
+                        Belum ada transaksi keuangan pada periode ini
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            
+            <!-- Grand Total Footer -->
+            {% if cashflow_report %}
+            <tfoot class="bg-gray-50 border-t-2 border-gray-200">
+                <tr>
+                    <td class="px-6 py-3 font-extrabold text-gray-900 uppercase text-xs">Total Keseluruhan</td>
+                    <td class="px-6 py-3 text-right font-extrabold text-emerald-700">+ {{ grand_total_inflow|rupiah }}</td>
+                    <td class="px-6 py-3 text-right font-extrabold text-red-700">- {{ grand_total_outflow|rupiah }}</td>
+                    <td class="px-6 py-3 text-right font-extrabold {% if accumulated_balance >= 0 %}text-emerald-800{% else %}text-red-800{% endif %}">
+                        {% if accumulated_balance >= 0 %}+{% endif %}{{ accumulated_balance|rupiah }}
+                    </td>
+                    <td class="px-6 py-3 text-right font-extrabold text-blue-900 bg-blue-100/50 border-l-4 border-blue-500">
+                        {{ accumulated_balance|rupiah }}
+                    </td>
+                </tr>
+            </tfoot>
+            {% endif %}
+        </table>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Pendapatan vs Pengeluaran -->
+    <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
+        <h3 class="text-sm font-semibold text-gray-800 mb-4">Pendapatan vs Pengeluaran (6 Bulan)</h3>
+        <div style="height: 280px;">
+            <canvas id="chartRevenue"></canvas>
+        </div>
+    </div>
+
+    <!-- Status Penanaman -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 class="text-sm font-semibold text-gray-800 mb-4">Status Penanaman</h3>
+        <div style="height: 280px;">
+            <canvas id="chartStatus"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Biaya per Kategori -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 class="text-sm font-semibold text-gray-800 mb-4">Biaya Operasional per Kategori (Bulan Ini)</h3>
+        <div style="height: 280px;">
+            <canvas id="chartKategori"></canvas>
+        </div>
+    </div>
+
+    <!-- Top 5 Bibit -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 class="text-sm font-semibold text-gray-800 mb-4">Bibit Paling Banyak Ditanam</h3>
+        {% if top_bibit %}
+        <div class="space-y-3">
+            {% for item in top_bibit %}
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-xs font-bold text-emerald-700">{{ forloop.counter }}</div>
+                    <span class="text-sm font-medium text-gray-800">{{ item.bibit__nama }}</span>
+                </div>
+                <span class="text-sm font-semibold text-gray-600">{{ item.total_tanam }} tanaman</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 text-center py-8">Belum ada data penanaman</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Aktivitas Terbaru -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Penjualan Terbaru -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 class="text-sm font-semibold text-gray-800 mb-4">Penjualan Terbaru</h3>
+        <div class="space-y-3">
+            {% for pj in penjualan_terbaru %}
+            <div class="flex items-start justify-between py-2 border-b border-gray-100 last:border-0">
+                <div>
+                    <p class="text-sm font-medium text-gray-800">{{ pj.pembeli }}</p>
+                    <p class="text-xs text-gray-500">{{ pj.pemanenan.penanaman.bibit.nama }} - {{ pj.tanggal_jual|date:"d M Y" }}</p>
+                </div>
+                <span class="text-sm font-semibold text-emerald-600">{{ pj.total|rupiah }}</span>
+            </div>
+            {% empty %}
+            <p class="text-xs text-gray-400 text-center py-4">Belum ada data</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Pemanenan Terbaru -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 class="text-sm font-semibold text-gray-800 mb-4">Pemanenan Terbaru</h3>
+        <div class="space-y-3">
+            {% for ph in pemanenan_terbaru %}
+            <div class="flex items-start justify-between py-2 border-b border-gray-100 last:border-0">
+                <div>
+                    <p class="text-sm font-medium text-gray-800">{{ ph.penanaman.bibit.nama }}</p>
+                    <p class="text-xs text-gray-500">{{ ph.tanggal_panen|date:"d M Y" }}</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-sm font-semibold text-gray-700">{{ ph.jumlah_panen }} {{ ph.get_satuan_display }}</span>
+                    <span class="block text-xs px-2 py-0.5 rounded-full {{ ph.kualitas|status_badge }}">{{ ph.get_kualitas_display }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-xs text-gray-400 text-center py-4">Belum ada data</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Perawatan Terbaru -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 class="text-sm font-semibold text-gray-800 mb-4">Perawatan Terbaru</h3>
+        <div class="space-y-3">
+            {% for pr in perawatan_terbaru %}
+            <div class="flex items-start justify-between py-2 border-b border-gray-100 last:border-0">
+                <div>
+                    <p class="text-sm font-medium text-gray-800">{{ pr.penanaman.bibit.nama }}</p>
+                    <p class="text-xs text-gray-500">{{ pr.get_jenis_perawatan_display }} - {{ pr.tanggal|date:"d M Y" }}</p>
+                </div>
+                <span class="text-sm font-semibold text-gray-700">{{ pr.biaya|rupiah }}</span>
+            </div>
+            {% empty %}
+            <p class="text-xs text-gray-400 text-center py-4">Belum ada data</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Chart: Pendapatan vs Pengeluaran
+    const ctxRevenue = document.getElementById('chartRevenue').getContext('2d');
+    new Chart(ctxRevenue, {
+        type: 'bar',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [
+                {
+                    label: 'Pendapatan',
+                    data: {{ chart_pendapatan|safe }},
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderRadius: 6,
+                    borderSkipped: false,
+                },
+                {
+                    label: 'Pengeluaran',
+                    data: {{ chart_pengeluaran|safe }},
+                    backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'rectRounded', padding: 20, font: { size: 12 } } },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            return ctx.dataset.label + ': Rp ' + ctx.raw.toLocaleString('id-ID');
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { display: false } },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) { return 'Rp ' + (value / 1000) + 'k'; }
+                    }
+                }
+            }
+        }
+    });
+
+    // Chart: Status Penanaman
+    const ctxStatus = document.getElementById('chartStatus').getContext('2d');
+    const statusLabels = {{ status_labels|safe }};
+    const statusData = {{ status_data|safe }};
+    if (statusLabels.length > 0) {
+        new Chart(ctxStatus, {
+            type: 'doughnut',
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    data: statusData,
+                    backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#6b7280', '#ef4444'],
+                    borderWidth: 0,
+                    spacing: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } }
+                }
+            }
+        });
+    } else {
+        document.getElementById('chartStatus').parentElement.innerHTML += '<p class="text-center text-gray-400 text-sm mt-16">Belum ada data penanaman</p>';
+    }
+
+    // Chart: Biaya per Kategori
+    const ctxKat = document.getElementById('chartKategori').getContext('2d');
+    const katLabels = {{ kategori_labels|safe }};
+    const katData = {{ kategori_data|safe }};
+    const katColors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#6b7280', '#84cc16'];
+    if (katLabels.length > 0) {
+        new Chart(ctxKat, {
+            type: 'doughnut',
+            data: {
+                labels: katLabels,
+                datasets: [{
+                    data: katData,
+                    backgroundColor: katColors.slice(0, katLabels.length),
+                    borderWidth: 0,
+                    spacing: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.label + ': Rp ' + ctx.raw.toLocaleString('id-ID');
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        document.getElementById('chartKategori').parentElement.innerHTML += '<p class="text-center text-gray-400 text-sm mt-16">Belum ada data biaya</p>';
+    }
+</script>
+{% endblock %}

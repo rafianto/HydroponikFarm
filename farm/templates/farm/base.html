@@ -1,0 +1,259 @@
+{% load static %}
+{% load farm_tags %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HydroFarm{% endblock %} - Manajemen Hidroponik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    colors: {
+                        farm: {
+                            50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0',
+                            300: '#6ee7b7', 400: '#34d399', 500: '#10b981',
+                            600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        /* Scrollbar kustom */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Sidebar */
+        .sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .sidebar-link {
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .sidebar-link::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: #10b981;
+            transform: scaleY(0);
+            transition: transform 0.2s ease;
+        }
+        .sidebar-link:hover::before, .sidebar-link.active::before { transform: scaleY(1); }
+        .sidebar-link:hover, .sidebar-link.active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+
+        /* Card hover */
+        .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+
+        /* Toast notifikasi */
+        .toast-enter { animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* Fade in */
+        .fade-in { animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Tabel */
+        .table-row { transition: background-color 0.15s ease; }
+
+        /* Stat counter */
+        .stat-value { font-variant-numeric: tabular-nums; }
+
+        /* Overlay sidebar mobile */
+        .sidebar-overlay {
+            position: fixed; inset: 0; z-index: 30;
+            background: rgba(0,0,0,0.5);
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Toast Messages -->
+    {% if messages %}
+    <div class="fixed top-4 right-4 z-50 space-y-2" id="toast-container">
+        {% for message in messages %}
+        <div class="toast-enter flex items-center gap-3 px-5 py-3 rounded-lg shadow-lg text-white text-sm font-medium
+            {% if 'success' in message.tags %}bg-emerald-600
+            {% elif 'error' in message.tags %}bg-red-600
+            {% elif 'warning' in message.tags %}bg-amber-500
+            {% else %}bg-blue-600{% endif %}">
+            <i class="fas
+                {% if 'success' in message.tags %}fa-check-circle
+                {% elif 'error' in message.tags %}fa-exclamation-circle
+                {% elif 'warning' in message.tags %}fa-exclamation-triangle
+                {% else %}fa-info-circle{% endif %}"></i>
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-80"><i class="fas fa-times"></i></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Sidebar Overlay (mobile) -->
+    <div id="sidebar-overlay" class="sidebar-overlay hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar (FIXED: Hilangkan lg:static agar tidak ikut scroll) -->
+    <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 z-40 w-64 bg-gray-900 text-gray-300 flex flex-col transform -translate-x-full lg:translate-x-0">
+
+        <!-- Logo -->
+        <div class="px-6 py-5 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-leaf text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-lg leading-tight">HydroFarm</h1>
+                    <p class="text-xs text-gray-500">Manajemen Hidroponik</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigasi (Tambahkan overflow-y-auto jika menu banyak) -->
+        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+            <a href="{% url 'farm:dashboard' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% block nav_dashboard %}{% endblock %}">
+                <i class="fas fa-tachometer-alt w-5 text-center"></i> Dashboard
+            </a>
+
+            <div class="pt-3 pb-1 px-3">
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-600">Operasional</p>
+            </div>
+
+            <a href="{% url 'farm:bibit_list' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% block nav_bibit %}{% endblock %}">
+                <i class="fas fa-seedling w-5 text-center"></i> Bibit
+            </a>
+            <a href="{% url 'farm:penanaman_list' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% block nav_penanaman %}{% endblock %}">
+                <i class="fas fa-leaf w-5 text-center"></i> Penanaman
+            </a>
+            <a href="{% url 'farm:perawatan_list' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% block nav_perawatan %}{% endblock %}">
+                <i class="fas fa-wrench w-5 text-center"></i> Perawatan
+            </a>
+            <a href="{% url 'farm:pemanenan_list' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% block nav_pemanenan %}{% endblock %}">
+                <i class="fas fa-cut w-5 text-center"></i> Pemanenan
+            </a>
+
+            <div class="pt-3 pb-1 px-3">
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-600">Keuangan</p>
+            </div>
+
+            <a href="{% url 'farm:penjualan_list' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% block nav_penjualan %}{% endblock %}">
+                <i class="fas fa-shopping-cart w-5 text-center"></i> Penjualan
+            </a>
+            <a href="{% url 'farm:biaya_list' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% block nav_biaya %}{% endblock %}">
+                <i class="fas fa-money-bill-wave w-5 text-center"></i> Biaya Operasional
+            </a>
+        </nav>
+
+        <!-- Footer sidebar -->
+        <div class="px-6 py-4 border-t border-gray-800">
+            <p class="text-xs text-gray-600">HydroFarm v1.0</p>
+        </div>
+    </aside>
+
+    <!-- Konten Utama (FIXED: Tambahkan lg:ml-64 agar tidak tertutup sidebar fixed) -->
+    <div class="lg:ml-64 flex flex-col min-h-screen">
+
+        <!-- Top Bar -->
+        <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 lg:px-8 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600">
+                        <i class="fas fa-bars text-lg"></i>
+                    </button>
+                    <h2 class="text-lg font-bold text-gray-800">{% block page_header %}Dashboard{% endblock %}</h2>
+                </div>
+                
+                <!-- Bagian Kanan Top Bar -->
+                <div class="flex items-center gap-4">
+                    <span class="text-xs text-gray-400 hidden md:inline" id="current-datetime"></span>
+                    
+                    {% if user.is_authenticated %}
+                    <div class="flex items-center gap-2 pl-4 border-l border-gray-200">
+                        <div class="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-inner">
+                            {{ user.username|make_list|first|upper }}
+                        </div>
+                        <span class="text-sm font-medium text-gray-700 hidden sm:inline">{{ user.username }}</span>
+                        
+                        <form action="{% url 'logout' %}" method="post" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-200">
+                                <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Logout</span>
+                            </button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="pl-4 border-l border-gray-200">
+                        <a href="{% url 'login' %}" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-600 hover:bg-emerald-50 transition border border-transparent hover:border-emerald-200">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 lg:p-8 fade-in">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        // Toggle sidebar mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // Tanggal/jam di top bar
+        function updateDateTime() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            const dateTimeEl = document.getElementById('current-datetime');
+            if(dateTimeEl) {
+                dateTimeEl.textContent = now.toLocaleDateString('id-ID', options);
+            }
+        }
+        updateDateTime();
+        setInterval(updateDateTime, 60000);
+
+        // Auto-hide toast setelah 5 detik
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const toasts = document.querySelectorAll('#toast-container > div');
+                toasts.forEach(function(toast) {
+                    toast.style.transition = 'opacity 0.5s, transform 0.5s';
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => toast.remove(), 500);
+                });
+            }, 5000);
+        });
+
+        // Konfirmasi hapus
+        function confirmDelete(formId) {
+            if (confirm('Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.')) {
+                document.getElementById(formId).submit();
+            }
+        }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
